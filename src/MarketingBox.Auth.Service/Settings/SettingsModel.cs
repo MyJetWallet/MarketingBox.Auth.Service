@@ -22,5 +22,8 @@ namespace MarketingBox.Auth.Service.Settings
 
         [YamlProperty("MarketingBoxAuthService.MyNoSqlWriterUrl")]
         public string MyNoSqlWriterUrl { get; set; }
+
+        [YamlProperty("MarketingBoxAuthService.PostgresConnectionString")]
+        public string PostgresConnectionString { get; set; }
     }
 }

@@ -7,12 +7,9 @@ namespace MarketingBox.Auth.Service.Grpc.Models.Users.Requests
     {
         [DataMember(Order = 1)]
         public string TenantId { get; set; }
-
+        
         [DataMember(Order = 2)]
-        public string EmailEncrypted { get; set; }
-
-        [DataMember(Order = 3)]
-        public string Username { get; set; }
+        public string ExternalUserId { get; set; }
 
     }
 }

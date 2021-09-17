@@ -15,6 +15,7 @@ namespace MarketingBox.Auth.Service.MyNoSql
         public string EmailEncrypted { get; set; }
 
         public string Username { get; set; }
+        public string ExternalUserId { get; set; }
 
         public string Salt { get; set; }
 
@@ -25,6 +26,7 @@ namespace MarketingBox.Auth.Service.MyNoSql
             string tenantId,
             string emailEncrypted,
             string username,
+            string externalUserId,
             string salt,
             string passwordHash) =>
             new()
@@ -35,7 +37,8 @@ namespace MarketingBox.Auth.Service.MyNoSql
                 PasswordHash = passwordHash,
                 Salt = salt,
                 Username = username,
-                EmailEncrypted = emailEncrypted
+                EmailEncrypted = emailEncrypted,
+                ExternalUserId = externalUserId
             };
     }
 }

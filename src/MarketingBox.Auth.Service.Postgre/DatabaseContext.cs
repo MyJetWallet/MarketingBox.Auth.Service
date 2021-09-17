@@ -1,4 +1,4 @@
-﻿using MarketingBox.Auth.Service.Postgre.Entities.Boxes;
+﻿using MarketingBox.Auth.Service.Postgre.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -43,8 +43,14 @@ namespace MarketingBox.Auth.Service.Postgre
         private void SetUserEntity(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<UserEntity>().ToTable(UserTableName);
-            modelBuilder.Entity<UserEntity>().HasKey(e => new {e.TenantId, Email = e.EmailEncrypted});
-            modelBuilder.Entity<UserEntity>().HasIndex(e => new { e.TenantId, e.Username });
+            modelBuilder.Entity<UserEntity>()
+                .HasKey(e => new {e.TenantId, Email = e.ExternalUserId });
+            modelBuilder.Entity<UserEntity>()
+                .HasIndex(e => new { e.TenantId, e.Username })
+                .IsUnique();
+            modelBuilder.Entity<UserEntity>()
+                .HasIndex(e => new { e.TenantId, e.EmailEncrypted })
+                .IsUnique();
         }
 
         public override void Dispose()

@@ -20,5 +20,8 @@ namespace MarketingBox.Auth.Service.Grpc.Models.Users
         [DataMember(Order = 5)]
         public string PasswordHash { get; set; }
 
+        [DataMember(Order = 6)]
+        public string ExternalUserId { get; set; }
+
     }
 }

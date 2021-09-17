@@ -2,6 +2,7 @@
 using Autofac;
 using MarketingBox.Auth.Service.Grpc;
 using MarketingBox.Auth.Service.Modules;
+using MarketingBox.Auth.Service.Postgre;
 using MarketingBox.Auth.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyJetWallet.Sdk.GrpcMetrics;
 using MyJetWallet.Sdk.GrpcSchema;
+using MyJetWallet.Sdk.Postgres;
 using MyJetWallet.Sdk.Service;
 using Prometheus;
 using ProtoBuf.Grpc.Server;
@@ -29,6 +31,10 @@ namespace MarketingBox.Auth.Service
             });
 
             services.AddHostedService<ApplicationLifetimeManager>();
+
+            services.AddDatabase(DatabaseContext.Schema,
+                Program.Settings.PostgresConnectionString,
+                o => new DatabaseContext(o));
 
             services.AddMyTelemetry("SP-", Program.Settings.ZipkinUrl);
         }

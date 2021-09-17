@@ -14,7 +14,7 @@ namespace MarketingBox.Auth.Service
 {
     public class Program
     {
-        public const string SettingsFileName = ".myjetwallet";
+        public const string SettingsFileName = ".marketingboxauthservice";
 
         public static SettingsModel Settings { get; private set; }
 

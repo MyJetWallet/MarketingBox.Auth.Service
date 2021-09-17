@@ -6,13 +6,13 @@ using MarketingBox.Auth.Service.Grpc.Models.Users.Requests;
 using MarketingBox.Auth.Service.Messages.Users;
 using MarketingBox.Auth.Service.MyNoSql;
 using MarketingBox.Auth.Service.Postgre;
-using MarketingBox.Auth.Service.Postgre.Entities.Boxes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyNoSqlServer.Abstractions;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketingBox.Auth.Service.Postgre.Entities.Users;
 using Z.EntityFramework.Plus;
 
 namespace MarketingBox.Auth.Service.Services
@@ -47,6 +47,7 @@ namespace MarketingBox.Auth.Service.Services
             {
                 var userEntity = new UserEntity()
                 {
+                    ExternalUserId = request.ExternalUserId,
                     EmailEncrypted = request.EmailEncrypted,
                     PasswordHash = request.PasswordHash,
                     Salt = request.Salt,
@@ -57,12 +58,12 @@ namespace MarketingBox.Auth.Service.Services
                 ctx.Users.Add(userEntity);
                 await ctx.SaveChangesAsync();
 
-                await _myNoSqlServerDataWriter.InsertAsync(MapToNosql(userEntity));
+                await _myNoSqlServerDataWriter.InsertOrReplaceAsync(MapToNosql(userEntity));
                 _logger.LogInformation("Created new User in NoSQL {@context}", request);
 
                 await _publisherUserUpdated.PublishAsync(MapToMessage(userEntity));
                 _logger.LogInformation("Sent event Created new User {@context}", request);
-
+ 
                 return MapToResponse(userEntity);
             }
             catch (Exception e)
@@ -83,20 +84,20 @@ namespace MarketingBox.Auth.Service.Services
 
             try
             {
-
                 var userEntity = new UserEntity()
                 {
                     EmailEncrypted = request.EmailEncrypted,
                     PasswordHash = request.PasswordHash,
                     Salt = request.Salt,
                     TenantId = request.TenantId,
-                    Username = request.Username
+                    Username = request.Username,
+                    ExternalUserId = request.ExternalUserId,
                 };
 
                 ctx.Users.Upsert(userEntity);
                 await ctx.SaveChangesAsync();
 
-                await _myNoSqlServerDataWriter.InsertAsync(MapToNosql(userEntity));
+                await _myNoSqlServerDataWriter.InsertOrReplaceAsync(MapToNosql(userEntity));
                 _logger.LogInformation("Updated User in NoSQL {@context}", request);
 
                 await _publisherUserUpdated.PublishAsync(MapToMessage(userEntity));
@@ -124,9 +125,11 @@ namespace MarketingBox.Auth.Service.Services
                 var userEntity = await ctx.Users
                     .FirstOrDefaultAsync(x => 
                         x.TenantId == request.TenantId && 
-                        (x.EmailEncrypted == request.EmailEncrypted || x.Username == request.Username));
+                        (x.EmailEncrypted == request.EmailEncrypted || 
+                         x.Username == request.Username || 
+                         x.ExternalUserId == request.ExternalUserId));
 
-                return MapToResponse(userEntity);
+                return userEntity != null ? MapToResponse(userEntity) : null;
             }
             catch (Exception e)
             {
@@ -145,20 +148,27 @@ namespace MarketingBox.Auth.Service.Services
 
             try
             {
-                await ctx.Users
-                    .Where(x =>
-                        x.TenantId == request.TenantId &&
-                        (x.EmailEncrypted == request.EmailEncrypted || x.Username == request.Username)).DeleteAsync();
+                var userEntity = await ctx.Users.FirstOrDefaultAsync(x =>
+                    x.TenantId == request.TenantId &&
+                    x.ExternalUserId == request.ExternalUserId);
 
-                await _myNoSqlServerDataWriter.DeleteAsync(UserNoSql.GeneratePartitionKey(request.TenantId), 
-                    UserNoSql.GenerateRowKey(request.EmailEncrypted));
+                if (userEntity == null)
+                    return new UserResponse();
+
+                await _myNoSqlServerDataWriter.DeleteAsync(UserNoSql.GeneratePartitionKey(userEntity.TenantId), 
+                    UserNoSql.GenerateRowKey(userEntity.EmailEncrypted));
 
                 await _publisherUserRemoved.PublishAsync(new UserRemoved()
                 {
-                    Username = request.Username,
-                    EmailEncrypted = request.EmailEncrypted,
-                    TenantId = request.TenantId
+                    Username = userEntity.Username,
+                    EmailEncrypted = userEntity.EmailEncrypted,
+                    TenantId = userEntity.TenantId
                 });
+
+                await ctx.Users
+                    .Where(x =>
+                        x.TenantId == request.TenantId &&
+                        x.ExternalUserId == request.ExternalUserId).DeleteAsync();
 
                 return new UserResponse();
             }
@@ -183,7 +193,8 @@ namespace MarketingBox.Auth.Service.Services
                     Salt = userEntity.Salt,
                     PasswordHash = userEntity.PasswordHash,
                     EmailEncrypted = userEntity.EmailEncrypted,
-                    TenantId = userEntity.TenantId
+                    TenantId = userEntity.TenantId,
+                    ExternalUserId = userEntity.ExternalUserId,
                 }
             };
         }
@@ -196,7 +207,8 @@ namespace MarketingBox.Auth.Service.Services
                 PasswordHash = userEntity.PasswordHash,
                 Username = userEntity.Username,
                 EmailEncrypted = userEntity.EmailEncrypted,
-                TenantId = userEntity.TenantId
+                TenantId = userEntity.TenantId,
+                ExternalUserId = userEntity.ExternalUserId,
             };
         }
 
@@ -206,6 +218,7 @@ namespace MarketingBox.Auth.Service.Services
                 userEntity.TenantId,
                 userEntity.EmailEncrypted,
                 userEntity.Username,
+                userEntity.ExternalUserId,
                 userEntity.Salt,
                 userEntity.PasswordHash);
         }
