@@ -16,10 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MarketingBox.Auth.Service.Crypto\MarketingBox.Auth.Service.Crypto.csproj" />
-    <ProjectReference Include="..\MarketingBox.Auth.Service.Grpc\MarketingBox.Auth.Service.Grpc.csproj" />
-    <ProjectReference Include="..\MarketingBox.Auth.Service.Messages\MarketingBox.Auth.Service.Messages.csproj" />
-    <ProjectReference Include="..\MarketingBox.Auth.Service.MyNoSql\MarketingBox.Auth.Service.MyNoSql.csproj" />
+    <ProjectReference PrivateAssets="All" Include="..\MarketingBox.Auth.Service.Crypto\MarketingBox.Auth.Service.Crypto.csproj" />
+    <ProjectReference PrivateAssets="All" Include="..\MarketingBox.Auth.Service.Grpc\MarketingBox.Auth.Service.Grpc.csproj" />
+    <ProjectReference PrivateAssets="All" Include="..\MarketingBox.Auth.Service.Messages\MarketingBox.Auth.Service.Messages.csproj" />
+    <ProjectReference PrivateAssets="All" Include="..\MarketingBox.Auth.Service.MyNoSql\MarketingBox.Auth.Service.MyNoSql.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
