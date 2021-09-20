@@ -3,6 +3,7 @@ using MarketingBox.Auth.Service.Grpc.Models;
 using MarketingBox.Auth.Service.Messages;
 using MarketingBox.Auth.Service.Messages.Users;
 using MarketingBox.Auth.Service.MyNoSql;
+using MarketingBox.Auth.Service.MyNoSql.Users;
 using MyJetWallet.Sdk.NoSql;
 using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.ServiceBus;

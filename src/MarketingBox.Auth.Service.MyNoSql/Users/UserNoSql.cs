@@ -1,14 +1,13 @@
-﻿using System;
-using MyNoSqlServer.Abstractions;
+﻿using MyNoSqlServer.Abstractions;
 
-namespace MarketingBox.Auth.Service.MyNoSql
+namespace MarketingBox.Auth.Service.MyNoSql.Users
 {
     public class UserNoSql : MyNoSqlDbEntity
     {
         public const string TableName = "marketingbox-authservice-users";
-        public static string GeneratePartitionKey(string tenantId) => $"{tenantId}";
-        public static string GenerateRowKey(string email) =>
-            $"{email}";
+        public static string GeneratePartitionKey(string emailEncrypted) => $"{emailEncrypted}";
+        public static string GenerateRowKey(string emailEncrypted) =>
+            $"{emailEncrypted}";
 
         public string TenantId { get; set; }
 
@@ -31,7 +30,7 @@ namespace MarketingBox.Auth.Service.MyNoSql
             string passwordHash) =>
             new()
             {
-                PartitionKey = GeneratePartitionKey(tenantId),
+                PartitionKey = GeneratePartitionKey(emailEncrypted),
                 RowKey = GenerateRowKey(emailEncrypted),
                 TenantId = tenantId,
                 PasswordHash = passwordHash,

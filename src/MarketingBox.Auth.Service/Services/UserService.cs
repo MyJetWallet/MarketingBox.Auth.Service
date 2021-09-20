@@ -10,8 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyNoSqlServer.Abstractions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketingBox.Auth.Service.MyNoSql.Users;
 using MarketingBox.Auth.Service.Postgre.Entities.Users;
 using Z.EntityFramework.Plus;
 
@@ -116,26 +118,46 @@ namespace MarketingBox.Auth.Service.Services
             }
         }
 
-        public async Task<UserResponse> GetAsync(GetUserRequest request)
+        public async Task<ManyUsersResponse> GetAsync(GetUserRequest request)
         {
             using var ctx = new DatabaseContext(_dbContextOptionsBuilder.Options);
 
             try
             {
-                var userEntity = await ctx.Users
-                    .FirstOrDefaultAsync(x => 
-                        x.TenantId == request.TenantId && 
-                        (x.EmailEncrypted == request.EmailEncrypted || 
-                         x.Username == request.Username || 
-                         x.ExternalUserId == request.ExternalUserId));
+                var query = ctx.Users.AsQueryable();
 
-                return userEntity != null ? MapToResponse(userEntity) : null;
+                if (!string.IsNullOrEmpty(request.TenantId))
+                {
+                    query = query.Where(x => x.TenantId == request.TenantId);
+                }
+
+                if (!string.IsNullOrEmpty(request.EmailEncrypted))
+                {
+                    query = query.Where(x => x.EmailEncrypted == request.EmailEncrypted);
+                }
+
+                if (!string.IsNullOrEmpty(request.Username))
+                {
+                    query = query.Where(x => x.Username == request.Username);
+                }
+
+                if (!string.IsNullOrEmpty(request.ExternalUserId))
+                {
+                    query = query.Where(x => x.ExternalUserId == request.ExternalUserId);
+                }
+
+                var userEntity = await query.ToArrayAsync();
+
+                return userEntity != null ? new ManyUsersResponse()
+                {
+                    User = userEntity.Select(x => MapToResponse(x).User).ToArray()
+                } : new ManyUsersResponse();
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error during user get. {@context}", request);
 
-                return new UserResponse()
+                return new ManyUsersResponse()
                 {
                     Error = new Error() { ErrorType = ErrorType.Unknown, Message = e.Message }
                 };
@@ -155,7 +177,7 @@ namespace MarketingBox.Auth.Service.Services
                 if (userEntity == null)
                     return new UserResponse();
 
-                await _myNoSqlServerDataWriter.DeleteAsync(UserNoSql.GeneratePartitionKey(userEntity.TenantId), 
+                await _myNoSqlServerDataWriter.DeleteAsync(UserNoSql.GeneratePartitionKey(userEntity.EmailEncrypted), 
                     UserNoSql.GenerateRowKey(userEntity.EmailEncrypted));
 
                 await _publisherUserRemoved.PublishAsync(new UserRemoved()

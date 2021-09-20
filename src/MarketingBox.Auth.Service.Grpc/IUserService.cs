@@ -1,4 +1,5 @@
-﻿using System.ServiceModel;
+﻿using System.Collections.Generic;
+using System.ServiceModel;
 using System.Threading.Tasks;
 using MarketingBox.Auth.Service.Grpc.Models;
 using MarketingBox.Auth.Service.Grpc.Models.Users;
@@ -16,7 +17,7 @@ namespace MarketingBox.Auth.Service.Grpc
         Task<UserResponse> UpdateAsync(UpdateUserRequest request);
         
         [OperationContract]
-        Task<UserResponse> GetAsync(GetUserRequest request);
+        Task<ManyUsersResponse> GetAsync(GetUserRequest request);
         
         [OperationContract]
         Task<UserResponse> DeleteAsync(DeleteUserRequest request);
