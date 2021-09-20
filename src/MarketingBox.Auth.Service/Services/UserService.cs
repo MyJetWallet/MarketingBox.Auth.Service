@@ -178,7 +178,7 @@ namespace MarketingBox.Auth.Service.Services
                     return new UserResponse();
 
                 await _myNoSqlServerDataWriter.DeleteAsync(UserNoSql.GeneratePartitionKey(userEntity.EmailEncrypted), 
-                    UserNoSql.GenerateRowKey(userEntity.EmailEncrypted));
+                    UserNoSql.GenerateRowKey(userEntity.TenantId));
 
                 await _publisherUserRemoved.PublishAsync(new UserRemoved()
                 {

@@ -6,8 +6,8 @@ namespace MarketingBox.Auth.Service.MyNoSql.Users
     {
         public const string TableName = "marketingbox-authservice-users";
         public static string GeneratePartitionKey(string emailEncrypted) => $"{emailEncrypted}";
-        public static string GenerateRowKey(string emailEncrypted) =>
-            $"{emailEncrypted}";
+        public static string GenerateRowKey(string tenantId) =>
+            $"{tenantId}";
 
         public string TenantId { get; set; }
 
@@ -31,7 +31,7 @@ namespace MarketingBox.Auth.Service.MyNoSql.Users
             new()
             {
                 PartitionKey = GeneratePartitionKey(emailEncrypted),
-                RowKey = GenerateRowKey(emailEncrypted),
+                RowKey = GenerateRowKey(tenantId),
                 TenantId = tenantId,
                 PasswordHash = passwordHash,
                 Salt = salt,
