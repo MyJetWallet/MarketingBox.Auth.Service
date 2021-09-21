@@ -13,8 +13,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MarketingBox.Auth.Service.Crypto;
 using MarketingBox.Auth.Service.MyNoSql.Users;
 using MarketingBox.Auth.Service.Postgre.Entities.Users;
+using MarketingBox.Auth.Service.Settings;
 using Z.EntityFramework.Plus;
 
 namespace MarketingBox.Auth.Service.Services
@@ -26,18 +28,24 @@ namespace MarketingBox.Auth.Service.Services
         private readonly IMyNoSqlServerDataWriter<UserNoSql> _myNoSqlServerDataWriter;
         private readonly IPublisher<UserUpdated> _publisherUserUpdated;
         private readonly IPublisher<UserRemoved> _publisherUserRemoved;
+        private readonly ICryptoService _cryptoService;
+        private readonly SettingsModel _settingsModel;
 
         public UserService(ILogger<UserService> logger,
             DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder,
             IMyNoSqlServerDataWriter<UserNoSql> myNoSqlServerDataWriter,
             IPublisher<UserUpdated> publisherUserUpdated,
-            IPublisher<UserRemoved> publisherUserRemoved)
+            IPublisher<UserRemoved> publisherUserRemoved,
+            ICryptoService cryptoService,
+            Settings.SettingsModel settingsModel)
         {
             _logger = logger;
             _dbContextOptionsBuilder = dbContextOptionsBuilder;
             _myNoSqlServerDataWriter = myNoSqlServerDataWriter;
             _publisherUserUpdated = publisherUserUpdated;
             _publisherUserRemoved = publisherUserRemoved;
+            _cryptoService = cryptoService;
+            _settingsModel = settingsModel;
         }
 
         public async Task<UserResponse> CreateAsync(CreateUserRequest request)
@@ -47,12 +55,20 @@ namespace MarketingBox.Auth.Service.Services
 
             try
             {
+                var encryptedEmail = _cryptoService.Encrypt(
+                    request.Email, 
+                    _settingsModel.EncryptionSalt, 
+                    _settingsModel.EncryptionSecret);
+
+                var salt = _cryptoService.GenerateSalt();
+                var passwordHash = _cryptoService.HashPassword(salt, request.Password);
+
                 var userEntity = new UserEntity()
                 {
                     ExternalUserId = request.ExternalUserId,
-                    EmailEncrypted = request.EmailEncrypted,
-                    PasswordHash = request.PasswordHash,
-                    Salt = request.Salt,
+                    EmailEncrypted = encryptedEmail,
+                    PasswordHash = passwordHash,
+                    Salt = salt,
                     TenantId = request.TenantId,
                     Username = request.Username
                 };
@@ -86,14 +102,22 @@ namespace MarketingBox.Auth.Service.Services
 
             try
             {
+                var encryptedEmail = _cryptoService.Encrypt(
+                    request.Email,
+                    _settingsModel.EncryptionSalt,
+                    _settingsModel.EncryptionSecret);
+
+                var salt = _cryptoService.GenerateSalt();
+                var passwordHash = _cryptoService.HashPassword(salt, request.Password);
+
                 var userEntity = new UserEntity()
                 {
-                    EmailEncrypted = request.EmailEncrypted,
-                    PasswordHash = request.PasswordHash,
-                    Salt = request.Salt,
+                    ExternalUserId = request.ExternalUserId,
+                    EmailEncrypted = encryptedEmail,
+                    PasswordHash = passwordHash,
+                    Salt = salt,
                     TenantId = request.TenantId,
                     Username = request.Username,
-                    ExternalUserId = request.ExternalUserId,
                 };
 
                 ctx.Users.Upsert(userEntity);
@@ -131,9 +155,14 @@ namespace MarketingBox.Auth.Service.Services
                     query = query.Where(x => x.TenantId == request.TenantId);
                 }
 
-                if (!string.IsNullOrEmpty(request.EmailEncrypted))
+                if (!string.IsNullOrEmpty(request.Email))
                 {
-                    query = query.Where(x => x.EmailEncrypted == request.EmailEncrypted);
+                    var encryptedEmail = _cryptoService.Encrypt(
+                        request.Email,
+                        _settingsModel.EncryptionSalt,
+                        _settingsModel.EncryptionSecret);
+
+                    query = query.Where(x => x.EmailEncrypted == encryptedEmail);
                 }
 
                 if (!string.IsNullOrEmpty(request.Username))

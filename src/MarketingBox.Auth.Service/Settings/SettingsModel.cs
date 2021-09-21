@@ -25,5 +25,11 @@ namespace MarketingBox.Auth.Service.Settings
 
         [YamlProperty("MarketingBoxAuthService.PostgresConnectionString")]
         public string PostgresConnectionString { get; set; }
+        
+        [YamlProperty("MarketingBoxAuthService.EncryptionSalt")]
+        public string EncryptionSalt { get; set; }
+
+        [YamlProperty("MarketingBoxAuthService.EncryptionSecret")]
+        public string EncryptionSecret { get; set; }
     }
 }
