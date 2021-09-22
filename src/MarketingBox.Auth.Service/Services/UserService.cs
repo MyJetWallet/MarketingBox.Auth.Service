@@ -17,6 +17,7 @@ using MarketingBox.Auth.Service.Crypto;
 using MarketingBox.Auth.Service.MyNoSql.Users;
 using MarketingBox.Auth.Service.Postgre.Entities.Users;
 using MarketingBox.Auth.Service.Settings;
+using Npgsql;
 using Z.EntityFramework.Plus;
 
 namespace MarketingBox.Auth.Service.Services
@@ -56,8 +57,8 @@ namespace MarketingBox.Auth.Service.Services
             try
             {
                 var encryptedEmail = _cryptoService.Encrypt(
-                    request.Email, 
-                    _settingsModel.EncryptionSalt, 
+                    request.Email,
+                    _settingsModel.EncryptionSalt,
                     _settingsModel.EncryptionSecret);
 
                 var salt = _cryptoService.GenerateSalt();
@@ -81,8 +82,19 @@ namespace MarketingBox.Auth.Service.Services
 
                 await _publisherUserUpdated.PublishAsync(MapToMessage(userEntity));
                 _logger.LogInformation("Sent event Created new User {@context}", request);
- 
+
                 return MapToResponse(userEntity);
+            }
+            catch (DbUpdateException exception)
+                when (exception.InnerException is PostgresException pgException &&
+                      pgException.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                _logger.LogError(exception, "Error during user creation. {@context}", request);
+
+                return new UserResponse()
+                {
+                    Error = new Error() { ErrorType = ErrorType.InvalidParameter, Message = "User already exists" }
+                };
             }
             catch (Exception e)
             {
