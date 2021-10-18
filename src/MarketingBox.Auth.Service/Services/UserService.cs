@@ -10,13 +10,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyNoSqlServer.Abstractions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MarketingBox.Auth.Service.Crypto;
 using MarketingBox.Auth.Service.MyNoSql.Users;
 using MarketingBox.Auth.Service.Postgre.Entities.Users;
 using MarketingBox.Auth.Service.Settings;
+using MyJetWallet.Sdk.ServiceBus;
 using Npgsql;
 using Z.EntityFramework.Plus;
 
@@ -27,16 +27,16 @@ namespace MarketingBox.Auth.Service.Services
         private readonly ILogger<UserService> _logger;
         private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
         private readonly IMyNoSqlServerDataWriter<UserNoSql> _myNoSqlServerDataWriter;
-        private readonly IPublisher<UserUpdated> _publisherUserUpdated;
-        private readonly IPublisher<UserRemoved> _publisherUserRemoved;
+        private readonly IServiceBusPublisher<UserUpdated> _publisherUserUpdated;
+        private readonly IServiceBusPublisher<UserRemoved> _publisherUserRemoved;
         private readonly ICryptoService _cryptoService;
         private readonly SettingsModel _settingsModel;
 
         public UserService(ILogger<UserService> logger,
             DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder,
             IMyNoSqlServerDataWriter<UserNoSql> myNoSqlServerDataWriter,
-            IPublisher<UserUpdated> publisherUserUpdated,
-            IPublisher<UserRemoved> publisherUserRemoved,
+            IServiceBusPublisher<UserUpdated> publisherUserUpdated,
+            IServiceBusPublisher<UserRemoved> publisherUserRemoved,
             ICryptoService cryptoService,
             Settings.SettingsModel settingsModel)
         {

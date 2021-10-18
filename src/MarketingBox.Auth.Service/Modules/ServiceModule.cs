@@ -1,12 +1,9 @@
 ﻿using Autofac;
 using MarketingBox.Auth.Service.Crypto;
-using MarketingBox.Auth.Service.Grpc.Models;
 using MarketingBox.Auth.Service.Messages;
 using MarketingBox.Auth.Service.Messages.Users;
-using MarketingBox.Auth.Service.MyNoSql;
 using MarketingBox.Auth.Service.MyNoSql.Users;
 using MyJetWallet.Sdk.NoSql;
-using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.ServiceBus;
 
 namespace MarketingBox.Auth.Service.Modules
@@ -18,7 +15,7 @@ namespace MarketingBox.Auth.Service.Modules
             var serviceBusClient = builder
                 .RegisterMyServiceBusTcpClient(
                     Program.ReloadedSettings(e => e.MarketingBoxServiceBusHostPort),
-                    ApplicationEnvironment.HostName, Program.LogFactory);
+                    Program.LogFactory);
 
             builder.Register(x => new CryptoService())
                 .As<ICryptoService>()
@@ -28,10 +25,10 @@ namespace MarketingBox.Auth.Service.Modules
 
             #region Users
 
-            // publisher (IPublisher<PartnerUpdated>)
+            // publisher (IServiceBusPublisher<PartnerUpdated>)
             builder.RegisterMyServiceBusPublisher<UserUpdated>(serviceBusClient, Topics.UserUpdatedTopic, false);
 
-            // publisher (IPublisher<PartnerRemoved>)
+            // publisher (IServiceBusPublisher<PartnerRemoved>)
             builder.RegisterMyServiceBusPublisher<UserRemoved>(serviceBusClient, Topics.UserRemovedTopic, false);
 
             // register writer (IMyNoSqlServerDataWriter<PartnerNoSql>)
